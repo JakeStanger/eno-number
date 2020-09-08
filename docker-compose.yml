@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+#  client:
+#    build: ./client
+#    volumes:
+#    - ./client:/app
+#    ports:
+#      - "3000:3000"
+#    command: bash -c "yarn && yarn start"
+#    links:
+#      - server
+#  server:
+#    build: ./server
+#    ports:
+#    - "8000:8000"
+#    volumes:
+#    - /server:/app
+#    links:
+#      # - redis
+#    command: bash -c "cargo watch -x run"
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - 6380:6379
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:

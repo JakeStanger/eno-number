@@ -1,0 +1,14 @@
+.artistBox {
+  background-color: white;
+  padding: 16px;
+  margin: 20px;
+  box-shadow: 0 4px 8px #00000014, 0 4px 8px #0000001f;
+  justify-content: center;
+  text-align: center;
+  width: max-content;
+  float: left;
+
+  .dragHandle {
+    cursor: move;
+  }
+}

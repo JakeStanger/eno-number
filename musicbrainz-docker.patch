@@ -1,0 +1,13 @@
+diff --git docker-compose.yml docker-compose.yml
+index ec55860..7547d26 100644
+--- docker-compose.yml
++++ docker-compose.yml
+@@ -35,6 +35,8 @@ services:
+       - pgdata:/var/lib/postgresql/data
+     expose:
+       - "5432"
++    ports:
++      - "${MUSICBRAINZ_POSTGRES_PORT:-5432}:5432"
+ 
+   musicbrainz:
+     build:

@@ -1,0 +1,5 @@
+[global.databases.musicbrainz_db]
+url = "postgresql://musicbrainz:musicbrainz@localhost:5432/musicbrainz_db"
+
+[global.databases.redis]
+url = "redis://localhost:6380/"
