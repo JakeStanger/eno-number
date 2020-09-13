@@ -14,23 +14,13 @@ pub struct Artist {
 #[derive(Clone, Debug)]
 pub struct ArtistNode<'a> {
     pub artist: Artist,
-    pub depth: u32,
+    pub depth: u8,
     pub parent: Option<&'a ArtistNode<'a>>,
 }
 
 impl ArtistNode<'_> {
-    pub fn new<'a>(
-        artist: Artist,
-        parent: Option<&'a ArtistNode<'a>>,
-        depth: u32,
-    ) -> ArtistNode<'a> {
-        ArtistNode {
-            artist,
-            depth,
-            parent,
-        }
-    }
-
+    /// Checks if the path to get to this node
+    /// already visits the given artist.
     pub fn has_visited(&self, artist: &Artist) -> bool {
         let mut parent = Some(self);
         while parent.is_some() {

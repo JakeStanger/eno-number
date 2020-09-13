@@ -1,11 +1,12 @@
+use std::collections::HashMap;
 use std::time::Instant;
+
+use rocket_contrib::databases::postgres;
 
 use crate::database::{get_artist_by_id, get_associated_artists};
 use crate::path_vec::PathVec;
 use crate::server::CalculateResponseBody;
 use crate::structs::{Artist, ArtistNode};
-use rocket_contrib::databases::postgres;
-use std::collections::HashMap;
 
 /// Converts an vector of Artists
 /// into a string, joined by `-->`.
@@ -28,8 +29,43 @@ fn format_path(path: Vec<Artist>) -> String {
     )
 }
 
-fn has_not_explored(artist: &Artist, explored: &mut HashMap<i32, u32>, depth: u32) -> bool {
-    !explored.contains_key(&artist.id) || explored.get(&artist.id).unwrap() > &depth
+/// Prints a node as part of a tree.
+fn print_node(node: &ArtistNode) {
+    for _i in 0..node.depth {
+        print!("\t");
+    }
+    println!(
+        "[{}]\t {}{}",
+        node.depth,
+        node.artist.name,
+        if (&node).artist.release.is_some() {
+            format!(" ({})", &(node).artist.release.as_ref().unwrap().name)
+        } else {
+            "".to_string()
+        }
+    );
+}
+
+/// Checks whether an artist has already been explored.
+///
+/// Returns false if the artist has been explored,
+/// but at a higher depth than the current.
+fn has_explored(artist: &Artist, explored: &mut HashMap<i32, u8>, current_depth: u8) -> bool {
+    let explored_depth = explored.get(&artist.id);
+    explored_depth.is_some() && &current_depth >= explored_depth.unwrap()
+}
+
+fn add_node(node: &ArtistNode, paths: &mut PathVec) {
+    let mut route = Vec::new();
+
+    let mut parent = Some(node);
+    while parent.is_some() {
+        let unwrapped = parent.unwrap();
+        route.push(unwrapped.clone().artist);
+        parent = unwrapped.parent;
+    }
+    route.reverse();
+    paths.add_path(route);
 }
 
 /// Gets a list of paths that join two artists.
@@ -38,47 +74,35 @@ fn get_associations(
     artist_node: &ArtistNode,
     destination: &Artist,
     paths: &mut PathVec,
-    explored: &mut HashMap<i32, u32>,
+    explored: &mut HashMap<i32, u8>,
     database: &mut postgres::Connection,
 ) {
     let associations = get_associated_artists(&artist_node.artist, database);
 
-    for association in associations
-        .into_iter()
-        .filter(|artist| {
-            !artist_node.has_visited(artist)
-                && has_not_explored(artist, explored, artist_node.depth)
-        })
-        .collect::<Vec<_>>()
-    {
-        let node = ArtistNode::new(association, Some(artist_node), artist_node.depth + 1);
-
-        for _i in 0..node.depth {
-            print!("\t");
+    for association in associations {
+        // ignore previously visited artists
+        if artist_node.has_visited(&association)
+            || has_explored(&association, explored, artist_node.depth)
+        {
+            continue;
         }
-        println!("[{}]\t {}", node.depth, node.artist.name);
+
+        let node = ArtistNode {
+            artist: association,
+            parent: Some(artist_node),
+            depth: artist_node.depth + 1,
+        };
+
+        print_node(&node);
 
         // route found
         if node.artist.id == destination.id {
-            let mut route = Vec::new();
-
-            let mut parent = Some(&node);
-            while parent.is_some() {
-                let unwrapped = parent.unwrap();
-                route.push(unwrapped.clone().artist);
-                parent = unwrapped.parent;
-            }
-            route.reverse();
-            paths.add_path(route.clone()); // TODO: Remove clone (after log cleaned)
-
-            println!("===ROUTE FOUND===");
-            println!("Length: {}", route.len());
-            println!("Shortest: {}", paths.shortest_distance);
-            println!("{}", format_path(route));
-            println!("------\n");
-        } else if node.depth < paths.shortest_distance as u32 {
+            add_node(&node, paths);
+        } else if node.depth < paths.shortest_distance as u8 {
             get_associations(&node, destination, paths, explored, database);
         }
+
+        explored.insert(node.artist.id, node.depth);
     }
 
     explored.insert(artist_node.artist.id, artist_node.depth);
@@ -104,7 +128,11 @@ pub fn calculate(
 
     println!("[1] {}", start.name);
 
-    let start_node: ArtistNode = ArtistNode::new(start.clone(), None, 1);
+    let start_node: ArtistNode = ArtistNode {
+        artist: start.clone(),
+        parent: None,
+        depth: 1,
+    };
 
     let mut paths = PathVec::new();
     let mut explored = HashMap::new();
