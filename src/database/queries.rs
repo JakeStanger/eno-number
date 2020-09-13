@@ -9,22 +9,15 @@ pub fn artist_by_id(id: i32) -> String {
     )
 }
 
-pub fn artist_acts(artist: &Artist) -> String {
+pub fn associated_acts(artist: &Artist) -> String {
     format!(
-        "SELECT artist.id, artist.name
+        "SELECT DISTINCT artist.id, artist.name
         FROM l_artist_artist
-        INNER JOIN artist ON artist.id = l_artist_artist.entity1
-        WHERE entity0 = {id} AND entity1 != {id}",
-        id = artist.id
-    )
-}
-
-pub fn act_artists(artist: &Artist) -> String {
-    format!(
-        "SELECT artist.id, artist.name
-        FROM l_artist_artist
-        INNER JOIN artist ON artist.id = l_artist_artist.entity0
-        WHERE entity1 = {id} AND entity0 != {id}",
+        INNER JOIN artist ON
+            (artist.id = l_artist_artist.entity1)
+            OR (artist.id = l_artist_artist.entity0)
+        WHERE (entity0 = {id} OR entity1 = {id})
+            AND artist.id != {id};",
         id = artist.id
     )
 }

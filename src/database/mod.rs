@@ -1,7 +1,7 @@
 use postgres::rows::Row;
 use rocket_contrib::databases::postgres;
 
-use crate::database::queries::{act_artists, artist_acts, artist_by_id, release_artists};
+use crate::database::queries::{artist_by_id, associated_acts, release_artists};
 use crate::settings::{INCLUDE_RECORDINGS, INCLUDE_RELEASES};
 use crate::structs::{Artist, Release};
 
@@ -32,8 +32,8 @@ fn get_artist_acts(artist: &Artist, client: &mut postgres::Connection) -> Artist
     Ok(rows.iter().map(|row| get_artist_from_row(row)).collect())
 }
 
-fn get_act_artists(artist: &Artist, client: &mut postgres::Connection) -> ArtistQueryResult {
-    let rows = client.query(act_artists(artist).as_str(), &[])?;
+fn get_associated_acts(artist: &Artist, client: &mut postgres::Connection) -> ArtistQueryResult {
+    let rows = client.query(associated_acts(artist).as_str(), &[])?;
 
     Ok(rows.iter().map(|row| get_artist_from_row(row)).collect())
 }
@@ -46,8 +46,7 @@ fn get_release_artists(artist: &Artist, client: &mut postgres::Connection) -> Ar
 
 pub fn get_associated_artists(artist: &Artist, client: &mut postgres::Connection) -> Vec<Artist> {
     let mut associated: Vec<Artist> = Vec::new();
-    associated.append(&mut get_artist_acts(artist, client).unwrap());
-    associated.append(&mut get_act_artists(artist, client).unwrap());
+    associated.append(&mut get_associated_acts(artist, client).unwrap());
 
     if INCLUDE_RELEASES {
         associated.append(&mut get_release_artists(artist, client).unwrap());
