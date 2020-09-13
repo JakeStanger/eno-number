@@ -24,7 +24,7 @@ pub fn associated_acts(artist: &Artist) -> String {
 
 pub fn release_artists(artist: &Artist) -> String {
     format!(
-        "SELECT DISTINCT ON (artist.id, release.name)
+        "SELECT DISTINCT ON (artist.id)
                artist.id as artist_id, artist.name as artist_name,
                release.id as release_id, release.name as release_name
         FROM l_artist_release
