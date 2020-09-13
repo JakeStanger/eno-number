@@ -7,6 +7,8 @@ use crate::structs::{Artist, ArtistNode};
 use rocket_contrib::databases::postgres;
 use std::collections::HashMap;
 
+/// Converts an vector of Artists
+/// into a string, joined by `-->`.
 fn format_path(path: Vec<Artist>) -> String {
     format!(
         "[{}] {}",
@@ -30,6 +32,8 @@ fn has_not_explored(artist: &Artist, explored: &mut HashMap<i32, u32>, depth: u3
     !explored.contains_key(&artist.id) || explored.get(&artist.id).unwrap() > &depth
 }
 
+/// Gets a list of paths that join two artists.
+/// Recursive main calculation method.
 fn get_associations(
     artist_node: &ArtistNode,
     destination: &Artist,
@@ -80,6 +84,7 @@ fn get_associations(
     explored.insert(artist_node.artist.id, artist_node.depth);
 }
 
+/// Gets the shortest path between two artists.
 pub fn calculate(
     start: i32,
     destination: i32,
