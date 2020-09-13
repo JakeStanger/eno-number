@@ -134,7 +134,6 @@ pub fn calculate(
         println!("\nShortest:");
         let formatted = format_path(shortest_path.clone());
         println!("{}", formatted);
-        // return formatted;
 
         return CalculateResponseBody {
             path: shortest_path,
