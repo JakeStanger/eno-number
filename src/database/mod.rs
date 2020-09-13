@@ -26,12 +26,6 @@ fn get_artist_from_row(row: Row) -> Artist {
     }
 }
 
-fn get_artist_acts(artist: &Artist, client: &mut postgres::Connection) -> ArtistQueryResult {
-    let rows = client.query(artist_acts(artist).as_str(), &[])?;
-
-    Ok(rows.iter().map(|row| get_artist_from_row(row)).collect())
-}
-
 fn get_associated_acts(artist: &Artist, client: &mut postgres::Connection) -> ArtistQueryResult {
     let rows = client.query(associated_acts(artist).as_str(), &[])?;
 
